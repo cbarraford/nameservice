@@ -5,9 +5,10 @@ import (
 	"os"
 
 	"github.com/cbarraford/nameservice/x/nameservice"
-	"github.com/gogo/protobuf/codec"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/genaccounts"
 	"github.com/cosmos/cosmos-sdk/x/bank"
@@ -18,7 +19,11 @@ import (
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	distr "github.com/cosmos/cosmos-sdk/x/distribution"
+	abci "github.com/tendermint/tendermint/abci/types"
+	cmn "github.com/tendermint/tendermint/libs/common"
 	dbm "github.com/tendermint/tendermint/libs/db"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 const appName = "nameservice"
@@ -31,12 +36,12 @@ var (
 	DefaultNodeHome = os.ExpandEnv("$HOME/.nsd")
 
 	// ModuleBasicManager is in charge of setting up basic module elemnets
-	ModuleBasics sdk.ModuleBasicManager
+	ModuleBasics module.BasicManager
 )
 
 // maintains independent module functionality
 func init() {
-	ModuleBasics = sdk.NewModuleBasicManager(
+	ModuleBasics = module.NewBasicManager(
 		genaccounts.AppModuleBasic{},
 		genutil.AppModuleBasic{},
 		auth.AppModuleBasic{},
@@ -47,6 +52,13 @@ func init() {
 		distr.AppModuleBasic{},
 		slashing.AppModuleBasic{},
 	)
+}
+
+// GenesisState represents chain state at the start of the chain. Any initial state (account balances) are stored here.
+type GenesisState map[string]json.RawMessage
+
+func NewDefaultGenesisState() GenesisState {
+	return ModuleBasics.DefaultGenesis()
 }
 
 type nameServiceApp struct {
@@ -77,7 +89,7 @@ type nameServiceApp struct {
 	nsKeeper            nameservice.Keeper
 
 	// Module Manager
-	mm *sdk.ModuleManager
+	mm *module.Manager
 }
 
 // NewNameServiceApp is a constructor function for nameServiceApp
@@ -177,7 +189,7 @@ func NewNameServiceApp(logger log.Logger, db dbm.DB) *nameServiceApp {
 		app.cdc,
 	)
 
-	app.mm = sdk.NewModuleManager(
+	app.mm = module.NewManager(
 		genaccounts.NewAppModule(app.accountKeeper),
 		genutil.NewAppModule(app.accountKeeper, app.stakingKeeper, app.BaseApp.DeliverTx),
 		auth.NewAppModule(app.accountKeeper, app.feeCollectionKeeper),
@@ -253,15 +265,15 @@ func (app *nameServiceApp) InitChainer(ctx sdk.Context, req abci.RequestInitChai
 
 }
 
-func (app *NameServiceApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+func (app *nameServiceApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
-func (app *NameServiceApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+func (app *nameServiceApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
-func (app *NameServiceApp) LoadHeight(height int64) error {
+func (app *nameServiceApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keyMain)
 }
 

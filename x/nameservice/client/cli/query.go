@@ -3,12 +3,11 @@ package cli
 import (
 	"fmt"
 
-	"github.com/cbarraford/nameservice/x/nameservice"
+	"github.com/cbarraford/nameservice/x/nameservice/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/utils"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/spf13/cobra"
 )
 
@@ -44,7 +43,7 @@ func GetCmdResolveName(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			var out nameservice.QueryResResolve
+			var out types.QueryResResolve
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
@@ -67,7 +66,7 @@ func GetCmdWhois(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			var out nameservice.Whois
+			var out types.Whois
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
@@ -89,7 +88,7 @@ func GetCmdNames(queryRoute string, cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			var out nameservice.QueryResNames
+			var out types.QueryResNames
 			cdc.MustUnmarshalJSON(res, &out)
 			return cliCtx.PrintOutput(out)
 		},
